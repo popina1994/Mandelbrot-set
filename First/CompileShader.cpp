@@ -2,10 +2,9 @@
 #include "utils.h"
 #include <iostream>
 
-CompilerShader::CompilerShader(GLenum _type, const char* sourcePath)
+CompilerShader::CompilerShader(GLenum type, const char* sourcePath)
 {
 	success = true;
-	type = _type;
 	handle = glCreateShader(type);
 	const GLchar *shaderSource = readShaderSource(sourcePath);
 	glShaderSource(handle, 1, &shaderSource, NULL);

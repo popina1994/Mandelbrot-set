@@ -6,8 +6,6 @@
 class CompilerShader
 {
 	GLuint handle = 0;
-	GLenum type;
-	const GLchar *source = nullptr;
 	bool success = false;
 	static constexpr unsigned int LOG_SIZE = 512;
 public:
