@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 // GLEW
 #define GLEW_STATIC
@@ -7,29 +8,25 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+#include "utils.h"
+#include "CompilerShaderVertex.h"
+#include "CompilerShaderFragment.h"
+#include "LinkerShader.h"
+
 // Window dimensions
-const GLuint WIDTH = 1920;
-const GLuint HEIGHT = 1080;
+constexpr GLuint WIDTH = 1920;
+constexpr GLuint HEIGHT = 1080;
 
 // Shaders
-const GLchar* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 position;\n"
-"void main()\n"
-"{\n"
-"gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-"}\0";
-const GLchar* fragmentShaderSource = "#version 330 core\n"
-"out vec4 color;\n"
-"void main()\n"
-"{\n"
-"color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
+const char* VERTEX_SOURCE_PATH = "vertex.glsl";
+const char* FRAGMENT_SOURCE_PATH = "fragment.glsl";
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
 	// Init GLFW
 	glfwInit();
+	atexit(glfwTerminate);
 
 	// Set all the required options for GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -42,15 +39,10 @@ int main()
 	GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "The Mandelbrot Set", nullptr, nullptr);
 	if (nullptr == window)
 	{
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
-
-	int screenWidth, screenHeight;
-	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
-
-
 	glfwMakeContextCurrent(window);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
@@ -58,64 +50,28 @@ int main()
 	// Initialize GLEW to setup the OpenGL Function pointers
 	if (GLEW_OK != glewInit())
 	{
-		std::cout << "Failed to initialize GLEW" << std::endl;
+		std::cerr << "Failed to initialize GLEW" << std::endl;
 		return EXIT_FAILURE;
 	}
 
+	int screenWidth, screenHeight;
+	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 	// Define the viewport dimensions
 	glViewport(0, 0, screenWidth, screenHeight);
 
-
-	// Build and compile our shader program
-	// Vertex shader
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	// Check for compile time errors
-	GLint success;
-	GLchar infoLog[512];
-
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
+	CompilerShaderVertex compilerVertexShader(VERTEX_SOURCE_PATH);
+	CompilerShaderFragment compilerFragmentShader(FRAGMENT_SOURCE_PATH);
+	if (!compilerVertexShader.Success() || !compilerFragmentShader.Success())
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+		return EXIT_FAILURE;
 	}
 
-	// Fragment shader
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	// Check for compile time errors
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
+	
+	LinkerShader linkerShader({ &compilerVertexShader, &compilerFragmentShader });
+	if (!linkerShader.Success())
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+		return EXIT_FAILURE;
 	}
-
-	// Link shaders
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	// Check for linking errors
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-
 	// Set up vertex data (and buffer(s)) and attribute pointers
 	GLfloat vertices[] =
 	{
@@ -148,11 +104,11 @@ int main()
 
 		// Render
 		// Clear the colorbuffer
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Draw our first triangle
-		glUseProgram(shaderProgram);
+		glUseProgram(linkerShader.Handle());
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
@@ -164,9 +120,6 @@ int main()
 	// Properly de-allocate all resources once they've outlived their purpose
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-
-	// Terminate GLFW, clearing any resources allocated by GLFW.
-	glfwTerminate();
 
 	return EXIT_SUCCESS;
 }
