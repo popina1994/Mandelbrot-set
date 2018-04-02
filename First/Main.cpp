@@ -75,14 +75,16 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	// Set up vertex data (and buffer(s)) and attribute pointers
-	GLfloat vertices[] =
-	{
-		-0.5f, -0.5f, 0.0f, // Left
-		0.5f, -0.5f, 0.0f, // Right
-		0.0f,  0.5f, 0.0f  // Top
+	// Two triangles needed because of OpenGL...
+	GLfloat vertices[] = {
+		-1.0f,  1.0f,  0.0f,
+		-1.0f,  -1.0f,  0.0f,
+		1.0f,  -1.0f,  0.0f,
+		-1.0f,  1.0f,  0.0f,
+		1.0f,  -1.0f,  0.0f,
+		1.0f,  1.0f,  0.0f,
 	};
-
+	
 	GLfloat colorData[] = {
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
@@ -120,13 +122,12 @@ int main()
 
 		// Render
 		// Clear the colorbuffer
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw our first triangle
 		glUseProgram(linkerShader.Handle());
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 4);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
