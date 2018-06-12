@@ -4,6 +4,9 @@ out vec4 outColor;
 
 uniform dvec2 screenSize;
 uniform double maxIteration;
+uniform dvec2 center;
+uniform double zoom;
+
 const double MAND_THRESHOLD = 2;
 
 vec3 hsv2rgb(vec3 c)
@@ -36,18 +39,15 @@ double mandelbroNumItRatio(dvec2 c)
 	return i / maxIteration;
 }
 
-
 void main()
 {
-	double itNum, zoom = 1.0;
-	dvec2 center;
-	dvec2 c, z;
-	double screen_ratio = screenSize.x / screenSize.y;
+	double itNum;
+	dvec2 c;
+	double screenRatio = screenSize.x / screenSize.y;
 
-	// Scale screen coordinates to [-1, 1] range, but proportionally to screen ratio. 
-	c.x = screen_ratio * (gl_FragCoord.x / screenSize.x - 0.5) * 2;
-	c.y = (gl_FragCoord.y / screenSize.y - 0.5) * 2;
-
+	// 0 - 400 -> 0 - zoom * 800-> zoom * -400 - zoom * 400 -> -1 - 1
+	c.x = (gl_FragCoord.x * zoom - center.x) * screenRatio / (screenSize.x / 2);
+	c.y = (gl_FragCoord.y * zoom - center.y) / (screenSize.y / 2);
 	itNum = mandelbroNumItRatio(c);
 	if (itNum >= 1)
 	{
@@ -59,32 +59,4 @@ void main()
 	}
 };
 
-/*
-void main()
-{
-	dvec2 z, c;
-	c.x = screen_ratio * (gl_FragCoord.x / screenSize.x - 0.5);
-	c.y = (gl_FragCoord.y / screenSize.y - 0.5);
-
-	c.x /= zoom;
-	c.y /= zoom;
-
-	c.x += center.x;
-	c.y += 1;
-
-	int i;
-	for (i = 0; i < itNum; i++) {
-		double x = (z.x * z.x - z.y * z.y) + c.x;
-		double y = (z.y * z.x + z.x * z.y) + c.y;
-
-		if ((x * x + y * y) > 2.0) break;
-		z.x = x;
-		z.y = y;
-	}
-
-	double t = double(i) / double(itNum);
-
-	outColor = map_to_color(float(t));
-}
-*/
 

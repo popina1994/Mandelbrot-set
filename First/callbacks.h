@@ -7,4 +7,7 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+extern double zoom;
+extern double center[2];
+
+void mouseButtonCallback(GLFWwindow* pWindow, int button, int action, int mods);

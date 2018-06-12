@@ -40,7 +40,7 @@ int main()
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	const GLFWvidmode *pScreenSize = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	GLFWwindow *pWindow = glfwCreateWindow(pScreenSize->width, pScreenSize->height, "The Mandelbrot Set", nullptr, nullptr);
+	GLFWwindow *pWindow = glfwCreateWindow(800, 600, "The Mandelbrot Set", nullptr, nullptr);
 	if (nullptr == pWindow)
 	{
 		std::cerr << "Failed to create GLFW pWindow" << std::endl;
@@ -60,12 +60,12 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	GLdouble aScreenSize[2] = { pScreenSize->width, pScreenSize->height};
+	
 	GLint screenWidth;
 	GLint screenHeight;
 	glfwGetFramebufferSize(pWindow, &screenWidth, &screenHeight);
 	glViewport(0, 0, screenWidth, screenHeight);
-
+	GLdouble aScreenSize[2] = { screenWidth, screenHeight};
 	CompilerShaderVertex compilerVertexShader(VERTEX_SOURCE_PATH);
 	CompilerShaderFragment compilerFragmentShader(FRAGMENT_SOURCE_PATH);
 	if (!compilerVertexShader.Success() || !compilerFragmentShader.Success())
@@ -119,21 +119,23 @@ int main()
 	{
 		GLint uniformScreenSize;
 		GLint uniformMaxIteration;
-		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
+		GLint uniformZoom;
+		GLint uniformCenter;
+
 		glfwPollEvents();
-
-		// Render
-		// Clear the colorbuffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Draw our first triangle
 		glUseProgram(linkerShader.Handle());
 		
 		// Passing uniform variables to shaders. 
 		uniformScreenSize = glGetUniformLocation(linkerShader.Handle(), "screenSize");
 		uniformMaxIteration = glGetUniformLocation(linkerShader.Handle(), "maxIteration");
+		uniformZoom = glGetUniformLocation(linkerShader.Handle(), "zoom");
+		uniformCenter = glGetUniformLocation(linkerShader.Handle(), "center");
+
 		glUniform2dv(uniformScreenSize, 1, aScreenSize);
 		glUniform1d(uniformMaxIteration, MAX_IT);
+		glUniform1d(uniformZoom, zoom);
+		glUniform2dv(uniformCenter, 1, center);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
