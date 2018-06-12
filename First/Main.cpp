@@ -13,10 +13,10 @@
 #include "CompilerShaderVertex.h"
 #include "CompilerShaderFragment.h"
 #include "LinkerShader.h"
+#include "callbacks.h"
 
 // Window dimensions
-constexpr GLuint WIDTH = 1920;
-constexpr GLuint HEIGHT = 1080;
+constexpr GLdouble MAX_IT = 360;
 
 // Shaders
 const char* VERTEX_SOURCE_PATH = "vertex.glsl";
@@ -39,14 +39,17 @@ int main()
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "The Mandelbrot Set", nullptr, nullptr);
-	if (nullptr == window)
+	const GLFWvidmode *pScreenSize = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	GLFWwindow *pWindow = glfwCreateWindow(pScreenSize->width, pScreenSize->height, "The Mandelbrot Set", nullptr, nullptr);
+	if (nullptr == pWindow)
 	{
-		std::cerr << "Failed to create GLFW window" << std::endl;
+		std::cerr << "Failed to create GLFW pWindow" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
-	glfwMakeContextCurrent(window);
+	glfwSetMouseButtonCallback(pWindow, mouseButtonCallback);
+	
+	glfwMakeContextCurrent(pWindow);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
@@ -57,9 +60,10 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	int screenWidth, screenHeight;
-	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
-	// Define the viewport dimensions
+	GLdouble aScreenSize[2] = { pScreenSize->width, pScreenSize->height};
+	GLint screenWidth;
+	GLint screenHeight;
+	glfwGetFramebufferSize(pWindow, &screenWidth, &screenHeight);
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	CompilerShaderVertex compilerVertexShader(VERTEX_SOURCE_PATH);
@@ -95,7 +99,6 @@ int main()
 	GLuint VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -109,14 +112,13 @@ int main()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(1);
 	
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+	glBindBuffer(GL_ARRAY_BUFFER, 0); 
+	glBindVertexArray(0); 
 
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
-
-
-	// Game loop
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(pWindow))
 	{
+		GLint uniformScreenSize;
+		GLint uniformMaxIteration;
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 
@@ -126,16 +128,21 @@ int main()
 
 		// Draw our first triangle
 		glUseProgram(linkerShader.Handle());
+		
+		// Passing uniform variables to shaders. 
+		uniformScreenSize = glGetUniformLocation(linkerShader.Handle(), "screenSize");
+		uniformMaxIteration = glGetUniformLocation(linkerShader.Handle(), "maxIteration");
+		glUniform2dv(uniformScreenSize, 1, aScreenSize);
+		glUniform1d(uniformMaxIteration, MAX_IT);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(pWindow);
 	}
 
-	// Properly de-allocate all resources once they've outlived their purpose
-	glDeleteVertexArrays(1, &VAO);
+ 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 
 	return EXIT_SUCCESS;
