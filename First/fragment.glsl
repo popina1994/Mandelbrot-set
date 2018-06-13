@@ -7,7 +7,6 @@ uniform double maxIteration;
 uniform dvec2 leftTop;
 uniform double zoom;
 
-
 const double MAND_THRESHOLD = 2;
 
 vec3 hsv2rgb(vec3 c)

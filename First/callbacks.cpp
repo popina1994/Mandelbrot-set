@@ -3,9 +3,13 @@
 #include <iostream>
 #include <string>
 
+constexpr int MIN_ITERATION = 1;
+constexpr int MAX_ITERATION = 360;
+
 double zoom = 1.0;
-double leftTop[2] = { 0};
-double rightBottom[2] = { 0};
+double leftTop[2] = { 0 };
+static double rightBottom[2] = { 0 };
+double maxIteration = 100;
 static double screenSize[2] = { 0 };
 static double xClick = 0.0;
 static double yClick = 0.0;
@@ -111,11 +115,26 @@ static void cursorPosCallback(GLFWwindow* pWindow, double xPos, double yPos)
 	}
 }
 
+static void scrollCallback(GLFWwindow *pWindows, double xOffset, double yOffset)
+{
+	double maxItPot = maxIteration + yOffset;
+	if (maxItPot < MIN_ITERATION)
+	{
+		maxItPot = 1;
+	}
+	if (maxItPot > MAX_ITERATION)
+	{
+		maxItPot = MAX_ITERATION;
+	}
+	maxIteration = maxItPot;
+}
+
 void initCallbacks(GLFWwindow *pWindow, double screenWidth, double screenHeight)
 {
 
 	glfwSetMouseButtonCallback(pWindow, mouseButtonCallback);
 	glfwSetCursorPosCallback(pWindow, cursorPosCallback);
+	glfwSetScrollCallback(pWindow, scrollCallback);
 	screenSize[0] = screenWidth;
 	screenSize[1] = screenHeight;
 	rightBottom[0] = screenSize[0];

@@ -16,7 +16,6 @@
 #include "callbacks.h"
 
 // Window dimensions
-constexpr GLdouble MAX_IT = 360;
 constexpr GLint SCREEN_HEIGHT = 1040;
 
 // Shaders
@@ -135,7 +134,7 @@ int main()
 		uniformLeftTop = glGetUniformLocation(linkerShader.Handle(), "leftTop");
 
 		glUniform2dv(uniformScreenSize, 1, aScreenSize);
-		glUniform1d(uniformMaxIteration, MAX_IT);
+		glUniform1d(uniformMaxIteration, maxIteration);
 		glUniform1d(uniformZoom, zoom);
 		glUniform2dv(uniformLeftTop, 1, leftTop);
 		glBindVertexArray(VAO);
