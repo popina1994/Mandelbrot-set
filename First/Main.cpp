@@ -17,6 +17,7 @@
 
 // Window dimensions
 constexpr GLdouble MAX_IT = 360;
+constexpr GLint SCREEN_HEIGHT = 1040;
 
 // Shaders
 const char* VERTEX_SOURCE_PATH = "vertex.glsl";
@@ -27,6 +28,8 @@ int main()
 {
 	FILE *stream;
 	freopen_s(&stream, "log.txt", "w", stderr);
+	std::ofstream out("log_w.txt");
+	std::cout.rdbuf(out.rdbuf());
 	// Init GLFW
 	glfwInit();
 	atexit(glfwTerminate);
@@ -40,15 +43,15 @@ int main()
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	const GLFWvidmode *pScreenSize = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	GLFWwindow *pWindow = glfwCreateWindow(800, 600, "The Mandelbrot Set", nullptr, nullptr);
+	GLFWwindow *pWindow = glfwCreateWindow(pScreenSize->width, SCREEN_HEIGHT, "The Mandelbrot Set", nullptr, nullptr);
 	if (nullptr == pWindow)
 	{
 		std::cerr << "Failed to create GLFW pWindow" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
-	glfwSetMouseButtonCallback(pWindow, mouseButtonCallback);
-	
+
+	initCallbacks(pWindow, pScreenSize->width, SCREEN_HEIGHT);
 	glfwMakeContextCurrent(pWindow);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
@@ -60,7 +63,6 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	
 	GLint screenWidth;
 	GLint screenHeight;
 	glfwGetFramebufferSize(pWindow, &screenWidth, &screenHeight);
@@ -120,7 +122,7 @@ int main()
 		GLint uniformScreenSize;
 		GLint uniformMaxIteration;
 		GLint uniformZoom;
-		GLint uniformCenter;
+		GLint uniformLeftTop;
 
 		glfwPollEvents();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -130,12 +132,12 @@ int main()
 		uniformScreenSize = glGetUniformLocation(linkerShader.Handle(), "screenSize");
 		uniformMaxIteration = glGetUniformLocation(linkerShader.Handle(), "maxIteration");
 		uniformZoom = glGetUniformLocation(linkerShader.Handle(), "zoom");
-		uniformCenter = glGetUniformLocation(linkerShader.Handle(), "center");
+		uniformLeftTop = glGetUniformLocation(linkerShader.Handle(), "leftTop");
 
 		glUniform2dv(uniformScreenSize, 1, aScreenSize);
 		glUniform1d(uniformMaxIteration, MAX_IT);
 		glUniform1d(uniformZoom, zoom);
-		glUniform2dv(uniformCenter, 1, center);
+		glUniform2dv(uniformLeftTop, 1, leftTop);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);

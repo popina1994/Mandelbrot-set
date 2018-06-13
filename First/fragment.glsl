@@ -4,8 +4,9 @@ out vec4 outColor;
 
 uniform dvec2 screenSize;
 uniform double maxIteration;
-uniform dvec2 center;
+uniform dvec2 leftTop;
 uniform double zoom;
+
 
 const double MAND_THRESHOLD = 2;
 
@@ -45,9 +46,9 @@ void main()
 	dvec2 c;
 	double screenRatio = screenSize.x / screenSize.y;
 
-	// 0 - 400 -> 0 - zoom * 800-> zoom * -400 - zoom * 400 -> -1 - 1
-	c.x = (gl_FragCoord.x * zoom - center.x) * screenRatio / (screenSize.x / 2);
-	c.y = (gl_FragCoord.y * zoom - center.y) / (screenSize.y / 2);
+	// 0 - 800 -> 0-720-> 40-760 -> -360-360->-1 - 1
+	c.x = (gl_FragCoord.x * zoom + leftTop[0] - screenSize.x / 2) * screenRatio / (screenSize.x / 2);
+	c.y = (gl_FragCoord.y * zoom + leftTop[1] - screenSize.y / 2) / (screenSize.y / 2);
 	itNum = mandelbroNumItRatio(c);
 	if (itNum >= 1)
 	{
